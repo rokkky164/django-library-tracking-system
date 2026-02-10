@@ -4,6 +4,8 @@ from .models import Author, Book, Member, Loan
 from .serializers import AuthorSerializer, BookSerializer, MemberSerializer, LoanSerializer
 from rest_framework.decorators import action
 from django.utils import timezone
+from django.utils import timezone
+from datetime import timedelta
 from .tasks import send_loan_notification
 
 class AuthorViewSet(viewsets.ModelViewSet):
@@ -65,12 +67,11 @@ class LoanViewSet(viewsets.ModelViewSet):
         data = request.data
         additional_days = data["additional_days"]
         loan = self.get_object()
-        from django.utils import timezone
         now = timezone.now()
         if loan.due_date < now():
             return Response({'status': ''}, status=400)
         if not (isinstance(additional_days, int) and additional_days > 0):
             return Response({'status': ''}, status=400)
-
-
+        loan.due_date = loan.due_date + timedelta(days=additional_days)
+        loan.save()
         return Response({'status': 'Loan for the book extended successfully.'}, status=status.HTTP_200_OK)
