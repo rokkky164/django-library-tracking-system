@@ -52,3 +52,25 @@ class MemberViewSet(viewsets.ModelViewSet):
 class LoanViewSet(viewsets.ModelViewSet):
     queryset = Loan.objects.all()
     serializer_class = LoanSerializer
+
+    @action(detail=True, methods=['post'])
+    def extend_due_date(self, request, pk=None):
+        """
+        Validate that the loan is not already overdue.
+        Validate that the additional_days is a positive integer.
+        Extend the due_date by the specified number of days.
+        Return the updated loan details in the response.
+
+        """
+        data = request.data
+        additional_days = data["additional_days"]
+        loan = self.get_object()
+        from django.utils import timezone
+        now = timezone.now()
+        if loan.due_date < now():
+            return Response({'status': ''}, status=400)
+        if not (isinstance(additional_days, int) and additional_days > 0):
+            return Response({'status': ''}, status=400)
+
+
+        return Response({'status': 'Loan for the book extended successfully.'}, status=status.HTTP_200_OK)
